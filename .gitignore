@@ -7,3 +7,6 @@
 /vendor/
 /work/
 *.zip
+/previa*.png
+diagnostico/tone.wav
+diagnostico/bridge.log

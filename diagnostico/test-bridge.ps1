@@ -1,5 +1,8 @@
 param([string]$CableName = '', [int]$Active = 1)
 $ErrorActionPreference = 'Stop'
+if(Get-Process RoxyPad,RoxyBridge,Discord -ErrorAction SilentlyContinue){throw 'Feche RoxyPad, RoxyBridge e Discord antes deste teste: ele emite um tom e usa o canal de áudio compartilhado.'}
+$bridgePath = Join-Path (Split-Path $PSScriptRoot -Parent) 'RoxyBridge.exe'
+if(!(Test-Path $bridgePath)){throw 'Compile RoxyBridge.exe antes do diagnóstico.'}
 $dir = Split-Path $MyInvocation.MyCommand.Path
 $wav = Join-Path $dir 'tone.wav'
 # 3 s, 440 Hz, amplitude 0.15, 48 kHz mono 16-bit
@@ -15,7 +18,7 @@ for ($i = 0; $i -lt $n; $i++) { $w.Write([int16](0.15 * 32767 * [Math]::Sin(2 * 
 $player = Start-Process powershell -PassThru -WindowStyle Hidden -ArgumentList "-NoProfile -Command Start-Sleep 3; (New-Object Media.SoundPlayer '$wav').PlaySync(); Start-Sleep 3"
 if ($CableName) { $env:ROXY_CABLE_NAME = $CableName }
 $log = Join-Path $dir 'bridge.log'
-$bridge = Start-Process 'D:\Projetos\RoxyPad\RoxyBridge.exe' -PassThru -WindowStyle Hidden -ArgumentList "$($player.Id) --verbose" -RedirectStandardError $log
+$bridge = Start-Process $bridgePath -PassThru -WindowStyle Hidden -ArgumentList "$($player.Id) --verbose" -RedirectStandardError $log
 Start-Sleep 1
 $map = [IO.MemoryMappedFiles.MemoryMappedFile]::OpenExisting('Local\RoxyPad.AudioBridge.v1')
 $view = $map.CreateViewAccessor(0, 64)
