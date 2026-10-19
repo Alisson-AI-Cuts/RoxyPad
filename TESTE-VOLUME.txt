@@ -1,0 +1,4 @@
+MediaOpened 1: volume=0,13, muted=False
+Playback advanced: 470,5833 ms
+MediaOpened 2: volume=0, muted=True
+PASS: live volume change, source replacement, zero mute, real decoder/playback on silent WAV. No audible quality claim.

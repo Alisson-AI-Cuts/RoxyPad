@@ -1,0 +1,43 @@
+LICENÇA ROXYPAD — USO PESSOAL GRATUITO — v1.0
+Copyright (c) 2026 Alisson (Alisson-AI-Cuts). Todos os direitos reservados.
+
+1. TITULARIDADE
+O RoxyPad, incluindo código próprio, interface e marca, pertence ao titular
+acima. Esta licença concede permissões limitadas; não transfere a propriedade.
+
+2. PERMISSÕES
+Você pode baixar, instalar, executar e fazer cópias de segurança do RoxyPad
+gratuitamente, exclusivamente para uso pessoal, privado e não comercial.
+Pode estudar o código e modificá-lo para seu próprio uso pessoal não comercial.
+Pode compartilhar o link do repositório e da distribuição oficial.
+
+3. RESTRIÇÕES
+Sem autorização prévia e escrita do titular, é proibido:
+- vender, revender, alugar, sublicenciar ou cobrar pelo acesso ao RoxyPad;
+- usar o RoxyPad ou seu código em atividade comercial, profissional remunerada,
+  serviço pago, produto comercial ou outra forma de monetização;
+- redistribuir o aplicativo ou versões modificadas, inclusive rebatizadas;
+- incorporar código próprio do RoxyPad em outro produto ou serviço;
+- remover avisos de autoria/licença ou apresentar o aplicativo como seu.
+Para usos diferentes, solicite autorização pelo repositório oficial:
+https://github.com/Alisson-AI-Cuts/RoxyPad
+
+4. COMPONENTES DE TERCEIROS
+Esta licença cobre apenas material sobre o qual o titular possui direitos.
+RNNoise, Poppins e VB-CABLE permanecem sob os termos de seus titulares,
+conforme THIRD-PARTY-NOTICES.md e os avisos incluídos na distribuição.
+As restrições desta licença não reduzem permissões concedidas diretamente
+pelas licenças desses componentes. Os áudios do usuário não são licenciados
+por este documento; o usuário deve possuir os direitos necessários sobre eles.
+
+5. GARANTIAS E RESPONSABILIDADE
+O software é fornecido "como está", sem garantias, na extensão permitida
+pela legislação aplicável. O titular não responde por perdas decorrentes
+do uso, na extensão permitida por lei. Direitos legais obrigatórios do
+usuário não são excluídos por esta licença.
+
+6. ENCERRAMENTO
+O descumprimento encerra as permissões aqui concedidas. Nesse caso,
+interrompa o uso e exclua suas cópias do material próprio do RoxyPad.
+
+Esta é uma licença proprietária de código visível, não uma licença open source.

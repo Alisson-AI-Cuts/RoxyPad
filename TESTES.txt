@@ -1,0 +1,3 @@
+PASS: import bytes, duplicate names, persisted reopen, rename, favorites, search, export collision, reserved filename, remove preservation, unsupported extension.
+PASS: volume and mute retained in actual MediaPlayer across 12 Close cycles (0%, 13%, 50%, 100%).
+Fixtures: C:\Users\aliss\Documents\Codex\2026-10-18\eu-x20\work\tests-v02\fa11cb0e77e64f0298f0ada3dace7185

@@ -1,0 +1,9 @@
+*.exe
+*.obj
+*.pdb
+*.ilk
+/Assets/
+/dist/
+/vendor/
+/work/
+*.zip
