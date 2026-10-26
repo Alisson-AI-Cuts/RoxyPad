@@ -6,7 +6,7 @@ Biblioteca pessoal de sons para Windows, com reprodução no fone e mistura de v
 
 ## Instalar e usar
 
-1. Baixe **RoxyPad-0.6.1-Setup-x64.exe** na página de releases e execute.
+1. Baixe **RoxyPad-0.6.2-Setup-x64.exe** na página de releases e execute.
 2. Ao terminar, abra o **Guia de primeiros passos**. Se ainda não tiver VB-CABLE, marque a opção de abrir seu instalador oficial. Clique em **Install Driver**, autorize o administrador e reinicie o Windows.
 3. Deixe o microfone físico como entrada padrão do Windows e seu fone como saída padrão. Permita o acesso de aplicativos de área de trabalho ao microfone.
 4. No Discord, escolha **CABLE Output** na entrada e **seu fone** na saída. Mantenha o RoxyPad aberto, inclusive na bandeja.

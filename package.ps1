@@ -34,7 +34,7 @@ if($p.ExitCode -ne 0 -or !(Test-Path (Join-Path $qa 'result.txt'))){throw 'Self-
 Get-Content (Join-Path $qa 'result.txt')
 & $ISCC (Join-Path $root 'installer/RoxyPad.iss')
 if($LASTEXITCODE -ne 0){throw 'Compilação do instalador falhou.'}
-$portable=Join-Path $dist 'RoxyPad-0.6.1-Portable-x64.zip'
+$portable=Join-Path $dist 'RoxyPad-0.6.2-Portable-x64.zip'
 Compress-Archive -Path (Join-Path $payload '*') -DestinationPath $portable
 $hashes=Get-ChildItem $dist -File | Where-Object {$_.Extension -in @('.exe','.zip')} | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(),$_.Name }
 Set-Content -LiteralPath (Join-Path $dist 'SHA256SUMS.txt') -Value $hashes -Encoding ascii

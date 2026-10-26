@@ -1,4 +1,4 @@
-# Build da distribuição 0.6.1
+# Build da distribuição 0.6.2
 
 Requisitos de desenvolvimento: Windows 11 x64, .NET Framework 4.x, Visual Studio/Build Tools com MSVC x64 e Windows SDK. Inno Setup 7.1 x64 para gerar Setup. Usuários finais não precisam dessas ferramentas.
 

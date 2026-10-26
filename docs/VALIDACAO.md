@@ -1,3 +1,9 @@
+# Verificação da distribuição 0.6.2 — 26/10/2026
+
+- Build completo por `package.ps1` (dentro do VsDevCmd) e self-test do payload: passaram, incluindo os testes novos de tecla de atalho.
+- Setup silencioso em pasta de QA sem atalhos: 50 arquivos conferidos byte a byte com o payload; versão 0.6.2 no exe e no registro de desinstalação; self-test do exe instalado passou; desinstalador retornou 0 e removeu exe e registro.
+- Teclas de atalho e menu novo testados pelo autor no app em uso. Não houve teste em Windows limpo nem nova chamada de áudio nesta versão.
+
 # Verificação da distribuição 0.6.1 — 19/10/2026
 
 ## Verificado nesta preparação

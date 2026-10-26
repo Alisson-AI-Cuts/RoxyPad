@@ -1,7 +1,7 @@
 [Setup]
 AppId={{5FC45958-3960-4DE0-8157-4ED2559C8AA1}
 AppName=RoxyPad
-AppVersion=0.6.1
+AppVersion=0.6.2
 AppPublisher=Alisson-AI-Cuts
 AppPublisherURL=https://github.com/Alisson-AI-Cuts/RoxyPad
 AppSupportURL=https://github.com/Alisson-AI-Cuts/RoxyPad/issues
@@ -12,7 +12,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.22000
 OutputDir=..\dist
-OutputBaseFilename=RoxyPad-0.6.1-Setup-x64
+OutputBaseFilename=RoxyPad-0.6.2-Setup-x64
 SetupIconFile=..\src\Assets\RoxyPad.ico
 UninstallDisplayIcon={app}\RoxyPad.exe
 LicenseFile=..\LICENSE.txt
