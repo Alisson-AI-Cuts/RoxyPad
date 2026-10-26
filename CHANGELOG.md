@@ -1,3 +1,8 @@
+# Não lançado
+
+- Tecla de atalho por áudio: botão direito → **Definir tecla de atalho**. A tecla (ou combinação com Ctrl/Alt/Shift) aparece na linha do áudio e toca o som mesmo com o RoxyPad escondido ou em outro app. Repetir uma tecla já usada pergunta se deve substituir. Teclas reservadas pelo Windows ou por outro app ficam marcadas com ⚠. Fica salvo em `library.xml`.
+- Menu do botão direito redesenhado no visual do app, com ícones e a tecla atual à direita.
+
 # 0.6.1 — 19/10/2026
 
 - Distribuição pública no GitHub, instalador por usuário em português e ZIP portátil.

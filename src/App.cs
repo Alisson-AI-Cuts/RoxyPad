@@ -20,6 +20,7 @@ namespace RoxyPad {
   static readonly string[] SupportedAudioExtensions={".mp3",".wav",".m4a",".aac",".wma"};
   Window win; Library lib; Forms.NotifyIcon tray; LocalAudio player=new LocalAudio(); BridgeControl bridge; Clip activeClip; double lastNonZeroVolume=0.5;
   bool favorites,quitting,updating,importing,isPlaying,isOpening,playerReady,playbackEnded,micRegistered,micReady; string libraryOverride; DispatcherTimer timer,micTimer,volumeSave,gainSave,gateSave; Mutex mutex; EventWaitHandle wake; RegisteredWaitHandle wait;
+  HwndSource hotkeyHost; System.Collections.Generic.Dictionary<int,Clip> hotkeys=new System.Collections.Generic.Dictionary<int,Clip>(); System.Collections.Generic.HashSet<Clip> hotkeyFailed=new System.Collections.Generic.HashSet<Clip>();
   T Get<T>(string name) where T:class {return win.FindName(name) as T;}
   static Brush Color(string color){return (Brush)new BrushConverter().ConvertFromString(color);}
   [STAThread] public static void Main(string[] args){
@@ -80,6 +81,7 @@ namespace RoxyPad {
    tray=new Forms.NotifyIcon{Icon=appIcon,Text="RoxyPad · reprodução local",Visible=true};
    var menu=new Forms.ContextMenuStrip();menu.Items.Add("Abrir RoxyPad",null,(s,e)=>Dispatcher.Invoke(new Action(ShowWindow)));menu.Items.Add("Parar áudio",null,(s,e)=>Dispatcher.Invoke(new Action(Stop)));menu.Items.Add("Sair",null,(s,e)=>Dispatcher.Invoke(new Action(()=>{if(importing){MessageBox.Show(win,"Aguarde a importação terminar antes de sair.");return;}quitting=true;timer.Stop();Stop();tray.Visible=false;win.Close();Shutdown();})));tray.ContextMenuStrip=menu;
    tray.MouseClick+=(s,e)=>{if(e.Button==Forms.MouseButtons.Left)Dispatcher.Invoke(new Action(ShowWindow));};
+   hotkeyHost=HwndSource.FromHwnd(new WindowInteropHelper(win).EnsureHandle());hotkeyHost.AddHook(HotkeyHook);RegisterHotkeys();
    Exit+=(s,e)=>{volumeSave.Stop();if(micTimer!=null)micTimer.Stop();bridge.SetActive(false);SaveVolume();};Get<Button>("Warning").ToolTip=MicDetails();Render();win.Show();
   }
   void ShowWindow(){win.Show();win.WindowState=WindowState.Normal;win.Activate();}
@@ -115,16 +117,45 @@ namespace RoxyPad {
    Get<TextBlock>("Count").Text="SUA BIBLIOTECA · "+clips.Count+(clips.Count!=lib.Clips.Count?" de "+lib.Clips.Count:"");
    Get<StackPanel>("Empty").Visibility=clips.Count==0?Visibility.Visible:Visibility.Collapsed;Get<TextBlock>("EmptyHint").Text=lib.Clips.Count==0?"Adicione um áudio para começar.":"Nenhum áudio neste filtro.";
    foreach(var c in clips){
-    var grid=new Grid();grid.ColumnDefinitions.Add(new ColumnDefinition{Width=new GridLength(28)});grid.ColumnDefinitions.Add(new ColumnDefinition());grid.ColumnDefinitions.Add(new ColumnDefinition{Width=new GridLength(32)});
+    var grid=new Grid();grid.ColumnDefinitions.Add(new ColumnDefinition{Width=new GridLength(28)});grid.ColumnDefinitions.Add(new ColumnDefinition());grid.ColumnDefinitions.Add(new ColumnDefinition{Width=GridLength.Auto});
     var symbol=new TextBlock{Text=activeClip==c&&isPlaying?"♫":"▶",Foreground=Color("#C5A6FF"),VerticalAlignment=VerticalAlignment.Center};grid.Children.Add(symbol);
     var stack=new StackPanel();stack.Children.Add(new TextBlock{Text=c.Name,TextTrimming=TextTrimming.CharacterEllipsis,FontSize=13,FontWeight=FontWeights.Bold});stack.Children.Add(new TextBlock{Text=Path.GetExtension(c.FileName).TrimStart('.').ToUpperInvariant()+"  ·  reprodução local",Foreground=Color("#AAA0B8"),FontSize=10,Margin=new Thickness(0,4,0,0)});Grid.SetColumn(stack,1);grid.Children.Add(stack);
-    var star=new TextBlock{Text=c.Favorite?"★":"",Foreground=Color("#B69CFF"),HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Center};Grid.SetColumn(star,2);grid.Children.Add(star);
+    var right=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};Grid.SetColumn(right,2);grid.Children.Add(right);
+    if(c.Hotkey!=null){bool failed=hotkeyFailed.Contains(c);right.Children.Add(new Border{Child=new TextBlock{Text=c.Hotkey+(failed?" ⚠":""),FontSize=10,Foreground=Color(failed?"#F09AAE":"#CDB8F5")},Background=Color("#2E2640"),BorderBrush=Color(failed?"#8A4A5C":"#5B4A70"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(5),Padding=new Thickness(7,2,7,2),VerticalAlignment=VerticalAlignment.Center,ToolTip=failed?"Outro app ou o Windows já usa esta tecla. Escolha outra.":"Aperte "+c.Hotkey+" para tocar"});}
+    right.Children.Add(new TextBlock{Text=c.Favorite?"★":"",Foreground=Color("#B69CFF"),Width=20,TextAlignment=TextAlignment.Right,VerticalAlignment=VerticalAlignment.Center});
     var button=new Button{Content=grid,HorizontalContentAlignment=HorizontalAlignment.Stretch,Background=Color(activeClip==c?"#352849":"#24212D"),BorderBrush=Color(activeClip==c?"#9270C2":"#383140"),Margin=new Thickness(0,0,0,6),Padding=new Thickness(12,10,12,10),ToolTip=c.Name};
     button.Click+=(s,e)=>Play(c);
-    var menu=new ContextMenu();Menu(menu,"Renomear",()=>Rename(c));Menu(menu,c.Favorite?"Remover dos favoritos":"Favoritar",()=>{lib.ToggleFavorite(c);Render();});Menu(menu,"Salvar cópia em Downloads",()=>{var p=lib.Export(c,Downloads());MessageBox.Show(win,"Cópia salva em:\n"+p,"Áudio exportado");});menu.Items.Add(new Separator());Menu(menu,"Remover da lista",()=>{if(MessageBox.Show(win,"Remover \""+c.Name+"\" da lista? Seu arquivo original será preservado.","Remover áudio",MessageBoxButton.YesNo)!=MessageBoxResult.Yes)return;if(activeClip==c){Stop();activeClip=null;UpdatePlayerUi();}lib.Remove(c);Render();});button.ContextMenu=menu;rows.Children.Add(button);
+    var menu=new ContextMenu{Style=(Style)win.FindResource("RoxyMenu"),FontFamily=win.FontFamily};Menu(menu,"","Renomear",()=>Rename(c));Menu(menu,c.Favorite?"":"",c.Favorite?"Remover dos favoritos":"Favoritar",()=>{lib.ToggleFavorite(c);Render();});Menu(menu,"",c.Hotkey==null?"Definir tecla de atalho":"Trocar tecla de atalho",()=>ChooseHotkey(c),c.Hotkey);Menu(menu,"","Salvar cópia em Downloads",()=>{var p=lib.Export(c,Downloads());MessageBox.Show(win,"Cópia salva em:\n"+p,"Áudio exportado");});menu.Items.Add(new Separator{Style=(Style)win.FindResource("RoxyMenuSeparator")});Menu(menu,"","Remover da lista",()=>{if(MessageBox.Show(win,"Remover \""+c.Name+"\" da lista? Seu arquivo original será preservado.","Remover áudio",MessageBoxButton.YesNo)!=MessageBoxResult.Yes)return;if(activeClip==c){Stop();activeClip=null;UpdatePlayerUi();}lib.Remove(c);RegisterHotkeys();Render();}).Foreground=Color("#F09AAE");button.ContextMenu=menu;rows.Children.Add(button);
    }
   }
-  void Menu(ContextMenu menu,string label,Action action){var item=new MenuItem{Header=label};item.Click+=(s,e)=>{try{action();}catch(Exception ex){MessageBox.Show(win,ex.Message,"Não foi possível concluir");}};menu.Items.Add(item);}
+  MenuItem Menu(ContextMenu menu,string icon,string label,Action action,string hint=null){var item=new MenuItem{Header=label,Icon=new TextBlock{Text=icon,FontFamily=new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),FontSize=13},InputGestureText=hint??"",Style=(Style)win.FindResource("RoxyMenuItem")};item.Click+=(s,e)=>{try{action();}catch(Exception ex){MessageBox.Show(win,ex.Message,"Não foi possível concluir");}};menu.Items.Add(item);return item;}
+  const int WM_HOTKEY=0x312;
+  [DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr hwnd,int id,uint modifiers,uint vk);
+  [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr hwnd,int id);
+  IntPtr HotkeyHook(IntPtr hwnd,int msg,IntPtr wParam,IntPtr lParam,ref bool handled){Clip c;if(msg==WM_HOTKEY&&hotkeys.TryGetValue(wParam.ToInt32(),out c)){handled=true;Play(c);}return IntPtr.Zero;}
+  void UnregisterHotkeys(){foreach(var id in hotkeys.Keys)UnregisterHotKey(hotkeyHost.Handle,id);hotkeys.Clear();}
+  // WPF ModifierKeys share the MOD_ALT/CONTROL/SHIFT/WIN values; 0x4000 is MOD_NOREPEAT so holding the key doesn't restart the clip.
+  void RegisterHotkeys(){UnregisterHotkeys();hotkeyFailed.Clear();int id=1;foreach(var c in lib.Clips.Where(x=>x.Hotkey!=null)){ModifierKeys mods;Key key;if(ParseHotkey(c.Hotkey,out mods,out key)&&RegisterHotKey(hotkeyHost.Handle,id,(uint)mods|0x4000,(uint)KeyInterop.VirtualKeyFromKey(key)))hotkeys[id++]=c;else hotkeyFailed.Add(c);}}
+  internal static string HotkeyText(ModifierKeys mods,Key key){var k=new KeyConverter().ConvertToInvariantString(key);return mods==ModifierKeys.None?k:new ModifierKeysConverter().ConvertToInvariantString(mods)+"+"+k;}
+  internal static bool ParseHotkey(string text,out ModifierKeys mods,out Key key){mods=ModifierKeys.None;key=Key.None;try{int i=text.LastIndexOf('+');if(i>0)mods=(ModifierKeys)new ModifierKeysConverter().ConvertFromInvariantString(text.Substring(0,i));key=(Key)new KeyConverter().ConvertFromInvariantString(text.Substring(i+1));return key!=Key.None;}catch(Exception){return false;}}
+  void ChooseHotkey(Clip c){
+   string chosen=null;bool clear=false;
+   var dialog=new Window{Owner=win,Title="Tecla de atalho",Width=360,SizeToContent=SizeToContent.Height,ResizeMode=ResizeMode.NoResize,WindowStartupLocation=WindowStartupLocation.CenterOwner,Background=Color("#17151D"),Foreground=Brushes.White};
+   var panel=new StackPanel{Margin=new Thickness(16)};
+   panel.Children.Add(new TextBlock{Text="Aperte a tecla que vai tocar \""+c.Name+"\".",TextWrapping=TextWrapping.Wrap,FontSize=14});
+   panel.Children.Add(new TextBlock{Text="Funciona com o RoxyPad escondido ou em outro app. A tecla deixa de funcionar nos outros programas, então prefira F1–F12, o teclado numérico ou Ctrl/Alt + tecla. Esc cancela.",TextWrapping=TextWrapping.Wrap,FontSize=11,Foreground=Color("#AAA0B8"),Margin=new Thickness(0,8,0,0)});
+   if(c.Hotkey!=null){var remove=new Button{Content="Remover atalho ("+c.Hotkey+")",Margin=new Thickness(0,12,0,0),Padding=new Thickness(8),Focusable=false};remove.Click+=(s,e)=>{clear=true;dialog.DialogResult=true;};panel.Children.Add(remove);}
+   dialog.Content=panel;
+   dialog.PreviewKeyDown+=(s,e)=>{e.Handled=true;var key=e.Key==Key.System?e.SystemKey:e.Key;if(key==Key.Escape){dialog.DialogResult=false;return;}if(key==Key.LeftCtrl||key==Key.RightCtrl||key==Key.LeftAlt||key==Key.RightAlt||key==Key.LeftShift||key==Key.RightShift||key==Key.LWin||key==Key.RWin||key==Key.ImeProcessed)return;chosen=HotkeyText(Keyboard.Modifiers,key);dialog.DialogResult=true;};
+   // Release our global keys while capturing, otherwise an already-assigned key plays its clip instead of reaching the dialog.
+   UnregisterHotkeys();bool? ok;try{ok=dialog.ShowDialog();}finally{RegisterHotkeys();}
+   if(ok!=true)return;
+   string hotkey=clear?null:chosen;
+   var owner=hotkey==null?null:lib.Clips.FirstOrDefault(x=>x!=c&&x.Hotkey==hotkey);
+   if(owner!=null&&MessageBox.Show(win,"A tecla "+hotkey+" já toca \""+owner.Name+"\".\n\nSubstituir para tocar \""+c.Name+"\"?","Tecla já usada",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
+   lib.SetHotkey(c,hotkey);RegisterHotkeys();Render();
+   if(hotkey!=null&&hotkeyFailed.Contains(c))MessageBox.Show(win,"O Windows ou outro app já usa "+hotkey+", então ela não vai tocar o áudio. Escolha outra tecla.","Tecla indisponível",MessageBoxButton.OK,MessageBoxImage.Warning);
+  }
   void Rename(Clip c){var dialog=new Window{Owner=win,Title="Renomear áudio",Width=340,Height=165,ResizeMode=ResizeMode.NoResize,WindowStartupLocation=WindowStartupLocation.CenterOwner,Background=Color("#17151D"),Foreground=Brushes.White};var panel=new StackPanel{Margin=new Thickness(16)};var input=new TextBox{Text=c.Name,MaxLength=120,FontSize=14,Padding=new Thickness(6)};var save=new Button{Content="Salvar",Margin=new Thickness(0,12,0,0),Padding=new Thickness(8),IsDefault=true};save.Click+=(s,e)=>{try{lib.Rename(c,input.Text);dialog.DialogResult=true;}catch(Exception ex){MessageBox.Show(dialog,ex.Message);}};panel.Children.Add(input);panel.Children.Add(save);dialog.Content=panel;dialog.Loaded+=(s,e)=>{input.Focus();input.SelectAll();};dialog.ShowDialog();if(activeClip==c)UpdatePlayerUi();Render();}
   [DllImport("shell32.dll")] static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)]Guid id,uint flags,IntPtr token,out IntPtr path);
   static string Downloads(){IntPtr p;int result=SHGetKnownFolderPath(new Guid("374DE290-123F-4565-9164-39C4925E467B"),0,IntPtr.Zero,out p);if(result!=0)Marshal.ThrowExceptionForHR(result);try{return Marshal.PtrToStringUni(p);}finally{Marshal.FreeCoTaskMem(p);}}

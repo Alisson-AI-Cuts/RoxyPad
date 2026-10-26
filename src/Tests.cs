@@ -15,10 +15,12 @@ namespace RoxyPad {
     Check(reopen.Find("RISADA",true).Count()==1,"Search and favorites");
     var outdir=Path.Combine(root,"downloads");var one=lib.Export(a,outdir);var two=lib.Export(a,outdir);Check(one!=two&&File.ReadAllBytes(one).SequenceEqual(File.ReadAllBytes(source)),"Export collision preserves bytes");
     lib.Rename(a,"CON");Check(Path.GetFileName(lib.Export(a,outdir))=="_CON.wav","Reserved filename");
+    lib.SetHotkey(a,"F7");lib.SetHotkey(b,"F7");var keys=new Library(lib.Root);Check(keys.Clips[0].Hotkey==null&&keys.Clips[1].Hotkey=="F7","Hotkey moves to new clip and persists");
+    foreach(var text in new[]{"F7","Ctrl+1","Ctrl+Alt+NumPad5","Shift+A"}){System.Windows.Input.ModifierKeys m;System.Windows.Input.Key k;Check(App.ParseHotkey(text,out m,out k)&&App.HotkeyText(m,k)==text,"Hotkey round trip "+text);}
     lib.Remove(a);Check(File.Exists(source)&&new Library(lib.Root).Clips.Count==1,"Remove preserves original");
     bool rejected=false;try{lib.Import(Path.Combine(root,"file.exe"));}catch(InvalidDataException){rejected=true;}Check(rejected,"Reject unsupported extension");
     var audio=new LocalAudio();foreach(var v in new[]{0.0,0.13,0.5,1.0}){audio.Volume=v;for(int cycle=0;cycle<3;cycle++){audio.Close();Check(Math.Abs(audio.AppliedVolume-v)<0.00001,"Actual MediaPlayer volume preserved after Close");Check(audio.AppliedMute==(v==0),"Mute preserved after Close");}}
-    File.WriteAllText(Path.Combine(parent,"result.txt"),"PASS: import bytes, duplicate names, persisted reopen, rename, favorites, search, export collision, reserved filename, remove preservation, unsupported extension.\nPASS: volume and mute retained in actual MediaPlayer across 12 Close cycles (0%, 13%, 50%, 100%).\nFixtures: "+root);
+    File.WriteAllText(Path.Combine(parent,"result.txt"),"PASS: import bytes, duplicate names, persisted reopen, rename, favorites, search, export collision, reserved filename, remove preservation, unsupported extension, hotkey reassignment and text round trip.\nPASS: volume and mute retained in actual MediaPlayer across 12 Close cycles (0%, 13%, 50%, 100%).\nFixtures: "+root);
    }catch(Exception ex){File.WriteAllText(Path.Combine(parent,"result.txt"),"FAIL: "+ex);Environment.ExitCode=1;}
   }
  }

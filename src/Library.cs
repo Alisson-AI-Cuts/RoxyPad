@@ -10,6 +10,7 @@ namespace RoxyPad {
   public string Name { get; set; }
   public string FileName { get; set; }
   public bool Favorite { get; set; }
+  public string Hotkey { get; set; }
  }
  public class Library {
   public readonly string Root;
@@ -36,6 +37,8 @@ namespace RoxyPad {
   }
   public void Rename(Clip c,string name){name=name.Trim();if(name.Length==0 || name.Length>120) throw new ArgumentException("Use um nome de 1 a 120 caracteres."); var old=c.Name;c.Name=name;try{Save();}catch{c.Name=old;throw;}}
   public void ToggleFavorite(Clip c){c.Favorite=!c.Favorite;try{Save();}catch{c.Favorite=!c.Favorite;throw;}}
+  // A hotkey belongs to one clip: assigning it takes it from the previous owner.
+  public void SetHotkey(Clip c,string hotkey){var owner=hotkey==null?null:Clips.FirstOrDefault(x=>x!=c&&x.Hotkey==hotkey);var old=c.Hotkey;c.Hotkey=hotkey;if(owner!=null)owner.Hotkey=null;try{Save();}catch{c.Hotkey=old;if(owner!=null)owner.Hotkey=hotkey;throw;}}
   public void Remove(Clip c){int i=Clips.IndexOf(c);Clips.Remove(c);try{Save();}catch{Clips.Insert(i,c);throw;} /* Retain owned audio for recovery; never delete original. */ }
   public string Export(Clip c,string directory){
    Directory.CreateDirectory(directory);string name=c.Name;
